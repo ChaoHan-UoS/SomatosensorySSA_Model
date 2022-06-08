@@ -1,4 +1,6 @@
-%% Run 2 conditions
+%% Run Oddball vs Many-standard conditions 
+% The code is adapted from Yarden TS, Nelken I (2017)
+
 close all;
 clear;
 
@@ -6,8 +8,8 @@ clear;
 
 % tau_rec
 % Par_Arr = [0.1:0.05:1.5]; 
-Par_Arr = [0.7];
-
+Par_Arr = 0.03:0.01:0.05;
+% Par_Arr = [0.18];
 % % U
 % Par_Arr = [0.4];
 % Par_Arr = [0.52];
@@ -37,8 +39,8 @@ for p = 1:length(Par_Arr)
 
     % Stimulation Parameters:
     Prob_Arr = [0.25]; % Sets the probabilitis of stimulation in the Low Condition, 0.1
-    A_Arr = [10]; % 6.5
-    ISI_Arr = [1]; % Interval between stimuli (offset to onset) %0.2
+    A_Arr = [5]; % 6.5
+    ISI_Arr = [1-0.010]; % Interval between stimuli (offset to onset) %0.2
 
     num_trials = 1; 
     for co = [1 4]  % There are 6 basic conditions 
