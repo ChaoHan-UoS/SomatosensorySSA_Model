@@ -1,21 +1,30 @@
-%% Model Run
-% This code runs the network saved and brought to equilibrium by
-% model_init, according to the specified condition defined by cond
+%% Runing the model on the condition specified by cond
 
-% cond = 1;
-% A = 1;
-% ISI = 1;
-% stim = 1;
-% prob = 1;
 
 tic
-n_stim = 120; % Total no. of stimuli (Best take a product of 4) %120
+n_stim = 120; % Total no. of stimuli (Best take a product of 4) 
 t_prot = n_stim*(duration + ISI) + 2*post_stim; % Total time of the protocol (in seconds) 
 tmax_tot = t_eq + t_prot; % Maximum time that the simulation will reach (in seconds) 
 num_steps = floor(tmax_tot/dt); % Total number of steps in the simulation
 
+
+switch cond
+    case {'Sequenced','Randomized'}
+        % Whisker identity setup in Sequenced vs. Randomized paradigms
+        AW1 = [3,2]; % C2
+        AW2 = [4,1]; % D1
+        AW3 = [2,1]; % B1
+        PW= [3,1]; % C1
+    otherwise
+        % Whisker identity setup in Odbball (Low) vs. Many-standards paradigms
+        AW1 = [4,2]; % D2
+        AW2 = [4,1]; % D1
+        AW3 = [4,3]; % D3
+        PW= [3,2]; % C2
+end
+
 Prob.L = prob;
-Barr_Stim.L = [AW1; PW]; % Location of stimulated barrels
+Barr_Stim.L = [AW1; PW]; %  Stimulated barrels
     
 Prob.H = 1 - prob;
 Barr_Stim.H = [PW; AW1]; 
@@ -31,6 +40,15 @@ Barr_Stim.DA1 = AW1;
         
 Prob.DA2 = prob;
 Barr_Stim.DA2 = PW; 
+
+Prob.S = prob;
+% Barr_Stim.S = [AW1; AW2; AW3; PW];
+Barr_Stim.S = [AW1; PW; AW2; AW3];
+
+Prob.R = prob;
+% Barr_Stim.R = [AW1; AW2; AW3; PW];
+Barr_Stim.R = [AW1; PW; AW2; AW3];
+
 
 switch cond
     case('Low')
@@ -50,57 +68,101 @@ switch cond
         Barr_Stims = Barr_Stim.DA1;
     case('Deviant Alone 2')
         Probs = Prob.DA2;
-        Barr_Stims = Barr_Stim.DA2;    
+        Barr_Stims = Barr_Stim.DA2;
+    case('Sequenced')
+        Probs = Prob.S;
+        Barr_Stims = Barr_Stim.S;
+    case('Randomized')
+        Probs = Prob.R;
+        Barr_Stims = Barr_Stim.R;
 end
 
-%% Oddball Sequence Generation
+%% Stimuli Sequence Generation
 switch cond
-    case('Low') % AW1 as standard and PW as deviant 
+    case('Low') % AW1 as standard and PW as deviant
         rng(666);
         n_stim_temp = 120;
         Oddball = [ones(ceil((1-Probs)*n_stim_temp),1)*Barr_Stims(1,:); ones(ceil(Probs*n_stim_temp),1)*Barr_Stims(2,:)]; % [AW1 Pw]
-        Oddball = Oddball(randperm(n_stim_temp),:); % n_stim*2
-        Oddball = Oddball(1:n_stim,:);
-    case('High') % AW1 as deviant and PW as standard  
-        Oddball = [ones(ceil(Probs*n_stim),1)*Barr_Stims(1,:); ones(ceil((1-Probs)*n_stim),1)*Barr_Stims(2,:)];
-        Oddball = Oddball(randperm(n_stim),:); 
-    case('Equal')
-        Oddball = [ones(ceil(Probs*n_stim),1)*Barr_Stims(1,:); ones(ceil((1-Probs)*n_stim),1)*Barr_Stims(2,:)]; % Here Probs=0.5
-        Oddball = Oddball(randperm(n_stim),:); 
-    case('Many Standard')  % AW1 PW AW2 AW3, each stimulated with probability of 0.25
-        rng(666);
-        n_stim_temp = 120;
-        whis_reps = n_stim_temp/size(Barr_Stims,1); % Repetitons of each stimulated whisker 
-        Oddball = [ones(whis_reps,1)*Barr_Stims(1,:); ones(whis_reps,1)*Barr_Stims(3,:);...
-                   ones(whis_reps,1)*Barr_Stims(4,:); ones(whis_reps,1)*Barr_Stims(2,:)];
         Oddball = Oddball(randperm(n_stim_temp),:);
         Oddball = Oddball(1:n_stim,:);
-    case('Deviant Alone 1') % AW1 as deviant 
+    case('High') % AW1 as deviant and PW as standard
+        Oddball = [ones(ceil(Probs*n_stim),1)*Barr_Stims(1,:); ones(ceil((1-Probs)*n_stim),1)*Barr_Stims(2,:)];
+        Oddball = Oddball(randperm(n_stim),:);
+    case('Equal') % Here Probs=0.5
+        Oddball = [ones(ceil(Probs*n_stim),1)*Barr_Stims(1,:); ones(ceil((1-Probs)*n_stim),1)*Barr_Stims(2,:)];
+        Oddball = Oddball(randperm(n_stim),:);
+    case('Many Standard')  % AW1 AW2 AW3 PW, each stimulated with a probability of 0.25
+        rng(666);
+        n_stim_temp = 120;
+        whis_reps = n_stim_temp/size(Barr_Stims,1);
+        Oddball = [ones(whis_reps,1)*Barr_Stims(1,:); ones(whis_reps,1)*Barr_Stims(3,:);...
+            ones(whis_reps,1)*Barr_Stims(4,:); ones(whis_reps,1)*Barr_Stims(2,:)];
+        Oddball = Oddball(randperm(n_stim_temp),:);
+        Oddball = Oddball(1:n_stim,:);
+    case('Deviant Alone 1') % AW1 as deviant
         Oddball = [Barr_Stims*ones(1,ceil(Probs*n_stim)) zeros(1,ceil((1-Probs)*n_stim))];
         Oddball = Oddball(randperm(n_stim));
-    case('Deviant Alone 2') % PW as deviant 
+    case('Deviant Alone 2') % PW as deviant
         Oddball = [Barr_Stims*ones(1,ceil(Probs*n_stim)) zeros(1,ceil((1-Probs)*n_stim))];
         Oddball = Oddball(randperm(n_stim));
+    case('Sequenced')
+        fileID = fopen('Python_protocols/Pattern_StimSequence.txt','r');
+        formatSpec = '%d';
+        oddball = fscanf(fileID,formatSpec);
+        fclose(fileID);
+        Oddball = zeros(n_stim,2);
+        for i = 1:n_stim
+            whis_ind = oddball(i);
+            switch whis_ind
+                case 1
+                    Oddball(i,:) = AW1;
+                case 2
+                    Oddball(i,:) = AW2;
+                case 3
+                    Oddball(i,:) = AW3;
+                case 0
+                    Oddball(i,:) = PW;
+            end
+        end
+    case('Random')
+        fileID = fopen('Python_protocols/Random_StimSequence.txt','r');
+        formatSpec = '%d';
+        oddball = fscanf(fileID,formatSpec);
+        fclose(fileID);
+        Oddball = zeros(n_stim,2);
+        for i = 1:n_stim
+            whis_ind = oddball(i);
+            switch whis_ind
+                case 1
+                    Oddball(i,:) = AW1;
+                case 2
+                    Oddball(i,:) = AW2;
+                case 3
+                    Oddball(i,:) = AW3;
+                case 0
+                    Oddball(i,:) = PW;
+            end
+        end
 end
 
-Spa_Temp = zeros(1,size(Barr_Stims,1),num_steps); % Spatial-temporal structure of the oddball stimulus sequence 
+Spa_Temp = zeros(1,size(Barr_Stims,1),num_steps); % Spatial-temporal structure of the stimuli sequence 
 ramp_step = dt/ramp_dur;
 Single_Stim = [ramp_step:ramp_step:1, ones(1,floor((duration - 2*ramp_dur)/dt)), wrev(ramp_step:ramp_step:1)]; % Waveform of each single stimulus
 Stim_Onsets = zeros(1,n_stim); % onset time indices of each stimulus 
 Time_Ind = zeros(n_stim,2); % onset & offset time indices of each stimulus
 
 for ns = 1:n_stim    
-    Time_Ind(ns,:) = floor(t_eq/dt) + floor((ISI+duration)/dt)*(ns - 1) + [0, (length(Single_Stim)-1)]; % Indices in which there is a stimulus; 
+    Time_Ind(ns,:) = floor(t_eq/dt) + floor((ISI+duration)/dt)*(ns - 1) + [0, (length(Single_Stim)-1)];
     if Oddball(ns,1) % For deviant alone, index of barrel is zero
         Spa_Temp(1, sum(Barr_Stims == Oddball(ns,:), 2) == 2, Time_Ind(ns,1):Time_Ind(ns,2)) = Single_Stim; % Amplitude of each stimulus along time indices
     end
     Stim_Onsets(ns) = Time_Ind(ns,1);
 end
 
-%% Initializing variables and sensory inputs:
-% ---- L4 ---- :
-E = zeros(M,N); % Acitivity(firing rate) of all barrels (in Hz) 
-h = zeros(M,N); % Sypnatic inputs of all barrels
+%% Initializing model variables and sensory inputs
+% ---- L4 ---- 
+E = zeros(M,N); % Acitivity (firing rate) of all barrels (in Hz) 
+h = zeros(M,N); % Sypnatic inputs to all barrels
 x = ones(M,N); % Mean fractions of resources available for synaptic transmission in all barrels
 z1 = ones(M,N,size(Barr_Stims,1)); 
 z2 = ones(M,N,size(Barr_Stims,1)); 
@@ -108,11 +170,11 @@ E_act_overall = zeros(M,N,num_steps); % Tracking activity of all barrels
 x_act_overall = zeros(M,N,num_steps); 
 z_act_overall = zeros(M,N,num_steps); % AW1
 z_act_overall2 = zeros(M,N,num_steps); % PW
-s_E1 = zeros(M,N,size(Barr_Stims,1)); % Sensory inputs to L4 (first half TC cells)
-s_E2 = zeros(M,N,size(Barr_Stims,1)); % (second half TC cells)
+s_E1 = zeros(M,N,size(Barr_Stims,1)); % Sensory input from bursting TCs to L4
+s_E2 = zeros(M,N,size(Barr_Stims,1)); % Sensory input from non-bursting TCs to L4
 % s_E_plot = zeros(M,N,num_steps);
 
-% ---- L6 ---- :
+% ---- L6 ---- 
 E_L6= zeros(M,N); 
 h_L6 = zeros(M,N);
 x_L6 = ones(M,N); 
@@ -122,8 +184,8 @@ x_L46 = ones(M,N);
 E_act_overall_L46 = zeros(M,N,num_steps); % L4 input to L6 
 x_act_overall_L46 = zeros(M,N,num_steps); 
 
-% ----- Thalamus ----- :
-I_s = zeros(4*Ntc+4*Nre,1);% Sensory input currents to TC neurons
+% ----- Thalamus ----- 
+I_s = zeros(4*Ntc+4*Nre,1); % Currents of stimulus inputs to TCs
 % I_s_overall = zeros(4*Ntc+4*Nre,num_steps);
 % I_L6th_overall = zeros(4*Ntc+4*Nre,num_steps);
 % I_in_overall = zeros(4*Ntc+4*Nre,num_steps);
@@ -131,9 +193,9 @@ E_act_overall_tc = zeros(4,num_steps);
 
 %% Dynamic Loop
 for i = 1:num_steps
-    %% ----- Thalamus ----- :    
-    fired = find(v >= 30); % indices of spikes
-    firings = [firings; i*dt+0*fired,fired];
+    %% ----- Thalamus -----   
+    fired = find(v >= 30); % Indices of fired thalamic neurons
+    firings = [firings; i*dt+0*fired,fired]; % Firing times and fired neuron indices
     
     % Firing rate of TC cells in corresponding stimulated barreloid
     if mod(i*dtt, del_t) < 10^-8 % Floating-point number tolerance
@@ -166,9 +228,9 @@ for i = 1:num_steps
         n_act2(4) = n_act2(4) + length(fired(fired > 3*Ntc+Ntc*p_th & fired <= 4*Ntc)); % AW3
     end
         
-    vv(fired, end + 1) = 30;
+%     vv(fired, end + 1) = 30; % Temporal collections of v
     unfired = find(v < 30); 
-    vv(unfired, end) = v(unfired);
+%     vv(unfired, end) = v(unfired);
     v(fired) = c(fired);
     u(fired) = u(fired) + d(fired);  
       
@@ -176,15 +238,17 @@ for i = 1:num_steps
     G(:, unfired(unfired <= 4*Ntc)) = G(:, unfired(unfired <= 4*Ntc)) - dtt*G(:, unfired(unfired <= 4*Ntc))/tau_ampa;
     G(:, unfired(unfired > 4*Ntc)) = G(:, unfired(unfired > 4*Ntc)) - dtt*G(:, unfired(unfired > 4*Ntc))/tau_gabaa;
     
+    % Intra-thalamic inputs
     I_in(:, 1:4*Ntc) = G(:, 1:4*Ntc).*repmat(v-v_ampa, [1 4*Ntc]);
     I_in(:, 4*Ntc+1:end) = G(:, 4*Ntc+1:end).*repmat(v-v_gabaa, [1 4*Nre]);
     
-    % Sensory input 
+    %  Spatial-temporal stimulus inputs to TCs 
     for j = 1:size(Barr_Stims,1)
-        I_s((j-1)*Ntc+1:j*Ntc) = -A*Spa_Temp(:,j,i);
-%         I_s((j-1)*Nre+1+4*Ntc:j*Nre+4*Ntc) = -A*Spa_Temp(:,j,i); % RE cells in each barreloid receive sensory input
+        I_s((j-1)*Ntc+1:j*Ntc) = -A*Spa_Temp(:,j,i); 
     end
-    if sum(i == Stim_Onsets(2:end)) % TC cells receiving sensory input vary from trial to trial 
+
+    % Varying identities of TCs receiving stimulus inputs from trial to trial  
+    if sum(i == Stim_Onsets(2:end)) 
         Conn_sth = zeros(4*Ntc+4*Nre, 1);
         Conn_sth([randi(Ntc*p_th,1,k_sth1) Ntc+randi(Ntc*p_th,1,k_sth1) ...
             2*Ntc+randi(Ntc*p_th,1,k_sth1) 3*Ntc+randi(Ntc*p_th,1,k_sth1)]) = 1;
@@ -193,25 +257,21 @@ for i = 1:num_steps
     end
     I_s = I_s.*Conn_sth; % (pA)
     
-    
-    % Cortico-thalamic input
+    % L6 inputa to thalamus
     E_L6th = [E_L6(AW1(1), AW1(2))*ones(Ntc,1); E_L6(PW(1), PW(2))*ones(Ntc,1); E_L6(AW2(1), AW2(2))*ones(Ntc,1); E_L6(AW3(1), AW3(2))*ones(Ntc,1);...
               E_L6(AW1(1), AW1(2))*ones(Nre,1); E_L6(PW(1), PW(2))*ones(Nre,1); E_L6(AW2(1), AW2(2))*ones(Nre,1); E_L6(AW3(1), AW3(2))*ones(Nre,1)];
     I_L6th = -(E_L6th-thres_L62th) .* Conn_L6th; % (pA)
     I_L6th(I_L6th > 0) = 0;
     
-    % background noisy input
-    I_noise = 0.05*(rand(4*Ntc+4*Nre, 1)-0); % Uniform distributed network noise %0.1
-%     I_noise = 0.25*(rand(4*Ntc+4*Nre, 1)-0.5); % Uniform distributed network noise %0.1
-%     I_noise = [0.35*(rand(Ntc, 1)-0.5); 0.35*(rand(Nre, 1)-0.5)]; % Uniform distributed network noise
-%     I_noise = zeros(4*Ntc+4*Nre, 1);
+    % Background input to thalamic
+    I_noise = 0.05*(rand(4*Ntc+4*Nre, 1)-0); % Uniform distributed noise 
     
     I = I_s + I_L6th + I_noise + sum(I_in, 2);
     
     v = v + dtt*(0.04*v.^2 + 5*v + 140 - u - I);
     u = u + dtt*a.*(b.*v - u);  
     
-    % Tracking sensory input
+    % Tracking thalamic inputs
 %     I_s_overall(:,i) = I_s;
 %     I_L6th_overall(:,i) = I_L6th; 
 %     I_in_overall(:,i) = sum(I_in, 2);
@@ -224,7 +284,8 @@ for i = 1:num_steps
     A_tc_s1(A_tc_s1 < 0) = 0;
     A_tc_s2 = A_tc2-thres_thL4;
     A_tc_s2(A_tc_s2 < 0) = 0;
-    % Calculating the sensory (thalamocortical) input to all barrels at the current time-step i:
+
+    % Calculating thalamocortical inputs to all barrels at the current time-step i:
     for j = 1:size(Barr_Stims,1)
         for m = 1:M
             for n = 1:N
@@ -250,7 +311,7 @@ for i = 1:num_steps
     end
     
 
-    % Total synaptic inputs each L4 barrel receives from itself, 4 vertical and horizontal neighbors and 4 diagonal neighbors
+    % Total synaptic inputs that each L4 barrel receives from itself, 4 vertical and horizontal neighbors and 4 diagonal neighbors
     EUx = E*U.*x;
     Temp1 = zeros(M, N);
     Temp1(:, 2:N) = EUx(:, 1:N-1); % Input from left barrel
@@ -274,10 +335,6 @@ for i = 1:num_steps
 
     % Adding thalamocortical input:
     H = H + sum(J_thL41*s_E1 + J_thL42*s_E2, 3);
-%     s_E_thres = s_E - thres_thL4;
-%     s_E_thres(s_E_thres <  0) = 0;
-%     H = H + sum(J_thL4*s_E,3);
-    
 
     % The dynamics of synaptic input:
     h = h + (dt/tau_h)*(-h + H);
@@ -297,12 +354,12 @@ for i = 1:num_steps
     % Tracking the activities of all barrels:
     E_act_overall(:,:,i) = E; 
     x_act_overall(:,:,i) = x; 
-    z_act_overall(:,:,i) = z1(:,:,1); 
-    z_act_overall2(:,:,i) = z1(:,:,2);
+    z_act_overall(:,:,i) = z1(:,:,1); % AW1
+    z_act_overall2(:,:,i) = z1(:,:,2); % PW
 %     s_E_plot(:,:,i) = sum(J_thL4*s_E,3);
     
     %% ---- L6 ---- :
-    % Total synaptic inputs each L6 infrabarrel receives from itself, 4 vertical and horizontal neighbors, 4 diagonal neighbors as well as intra-column L4 barrel
+    % Total synaptic inputs that each L6 infrabarrel receives from itself, 4 vertical and horizontal neighbors, 4 diagonal neighbors as well as intra-column L4 barrel
     EUx_L6 = E_L6*U_L6.*x_L6;
     Temp1 = zeros(M, N);
     Temp1(:, 2:N) = EUx_L6(:, 1:N-1); % Input from left barrel
@@ -349,8 +406,8 @@ for i = 1:num_steps
 end
 
 % vv_samp = vv([50 150 400+50 400+150], :); % Temporal profiles of membrane potential of 2 TC and 2 RE neurons
-vv_samp = vv([5 10], :); 
-vv = []; % to save memory
+% vv_samp = vv([5 10], :); 
+% vv = []; % to save memory
 
 % Recording Equilibrium Conditions:
 E_eq_tc = E_act_overall_tc(:,num_steps_eq); % TC cells
@@ -364,61 +421,9 @@ E_eq_L6 = E_act_overall_L6(:,:,num_steps_eq); % L6
 x_eq_L6 = x_act_overall_L6(:,:,num_steps_eq);  
 
 
-
-
-%{
-% Activities of L4 barrels surrounding PW 
-E_plot = zeros(9,num_steps);
-E_plot(1,:) = reshape(E_act_overall(PW(1)-1,PW(2)-1,:), [1, num_steps]);
-E_plot(2,:) = reshape(E_act_overall(PW(1)-1,PW(2)+1,:), [1, num_steps]);
-E_plot(3,:) = reshape(E_act_overall(PW(1)-1,PW(2),:), [1, num_steps]);
-E_plot(4,:) = reshape(E_act_overall(PW(1),PW(2)-1,:), [1, num_steps]);
-E_plot(5,:) = reshape(E_act_overall(PW(1),PW(2),:), [1, num_steps]);
-E_plot(6,:) = reshape(E_act_overall(PW(1),PW(2)+1,:), [1, num_steps]);
-E_plot(7,:) = reshape(E_act_overall(PW(1)+1,PW(2),:), [1, num_steps]);
-E_plot(8,:) = reshape(E_act_overall(PW(1)+1,PW(2)+1,:), [1, num_steps]);
-E_plot(9,:) = reshape(E_act_overall(PW(1)+1,PW(2)-1,:), [1, num_steps]);
-
-% Resource of L4 barrels surrounding PW 
-x_plot = zeros(9,num_steps);
-x_plot(1,:) = reshape(x_act_overall(PW(1)-1,PW(2)-1,:), [1, num_steps]);
-x_plot(2,:) = reshape(x_act_overall(PW(1)-1,PW(2)+1,:), [1, num_steps]);
-x_plot(3,:) = reshape(x_act_overall(PW(1)-1,PW(2),:), [1, num_steps]);
-x_plot(4,:) = reshape(x_act_overall(PW(1),PW(2)-1,:), [1, num_steps]);
-x_plot(5,:) = reshape(x_act_overall(PW(1),PW(2),:), [1, num_steps]);
-x_plot(6,:) = reshape(x_act_overall(PW(1),PW(2)+1,:), [1, num_steps]);
-x_plot(7,:) = reshape(x_act_overall(PW(1)+1,PW(2),:), [1, num_steps]);
-x_plot(8,:) = reshape(x_act_overall(PW(1)+1,PW(2)+1,:), [1, num_steps]);
-x_plot(9,:) = reshape(x_act_overall(PW(1)+1,PW(2)-1,:), [1, num_steps]);
-
-
-E_plot1 = zeros(9,num_steps);
-E_plot1(1,:) = reshape(E_act_overall(AW1(1)-1,AW1(2)-1,:), [1, num_steps]);
-E_plot1(2,:) = reshape(E_act_overall(AW1(1)-1,AW1(2)+1,:), [1, num_steps]);
-E_plot1(3,:) = reshape(E_act_overall(AW1(1)-1,AW1(2),:), [1, num_steps]);
-E_plot1(4,:) = reshape(E_act_overall(AW1(1),AW1(2)-1,:), [1, num_steps]);
-E_plot1(5,:) = reshape(E_act_overall(AW1(1),AW1(2),:), [1, num_steps]);
-E_plot1(6,:) = reshape(E_act_overall(AW1(1),AW1(2)+1,:), [1, num_steps]);
-E_plot1(7,:) = reshape(E_act_overall(AW1(1)+1,AW1(2),:), [1, num_steps]);
-E_plot1(8,:) = reshape(E_act_overall(AW1(1)+1,AW1(2)+1,:), [1, num_steps]);
-E_plot1(9,:) = reshape(E_act_overall(AW1(1)+1,AW1(2)-1,:), [1, num_steps]);
-
-x_plot1 = zeros(9,num_steps);
-x_plot1(1,:) = reshape(x_act_overall(AW1(1)-1,AW1(2)-1,:), [1, num_steps]);
-x_plot1(2,:) = reshape(x_act_overall(AW1(1)-1,AW1(2)+1,:), [1, num_steps]);
-x_plot1(3,:) = reshape(x_act_overall(AW1(1)-1,AW1(2),:), [1, num_steps]);
-x_plot1(4,:) = reshape(x_act_overall(AW1(1),AW1(2)-1,:), [1, num_steps]);
-x_plot1(5,:) = reshape(x_act_overall(AW1(1),AW1(2),:), [1, num_steps]);
-x_plot1(6,:) = reshape(x_act_overall(AW1(1),AW1(2)+1,:), [1, num_steps]);
-x_plot1(7,:) = reshape(x_act_overall(AW1(1)+1,AW1(2),:), [1, num_steps]);
-x_plot1(8,:) = reshape(x_act_overall(AW1(1)+1,AW1(2)+1,:), [1, num_steps]);
-x_plot1(9,:) = reshape(x_act_overall(AW1(1)+1,AW1(2)-1,:), [1, num_steps]);
-%}
-
-
 %% Saving
 if save_results    
-    filename2 = ['Simulation Results/run_par' num2str(par) '_' Cond_Code{co}];
+    filename2 = ['Simulation Results/run_par' num2str(par) '_' Cond_Code{Cond_Arr(co)}];
     
     if length(Prob_Arr) > 1
       filename2 = [filename2 '_P' num2str(prob)];
