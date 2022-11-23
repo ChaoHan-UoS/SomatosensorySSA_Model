@@ -18,4 +18,4 @@ https://figshare.com/articles/dataset/Simulation_Results/21614145 and unzip it i
 3. run `Plotting_S1.m` to generate Figure S1 in the paper
 
 ## License
-The provided python code is licenced under the MIT license, see the LICENSE file.
+The provided Matlab code is licenced under the MIT license, see the LICENSE file.
