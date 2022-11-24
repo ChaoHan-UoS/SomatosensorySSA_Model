@@ -6,7 +6,7 @@ The stimulus-specific adaptation and true deviance detection results can be repr
 
 Similarly, the novelty-predicting effect results can be reproduced by running `main.m` with `Cond_Arr = [7 8]` specified in the script, which represents the sequenced and randomized protocols.
 
-The `main.m` script in turn runs `model_init.m` that is for initializing our model and stimulus parameters and `model_init.m` that is for simulating our model on each protocol. All simulation results are saved in `/Simulation Results` folder that is needed to be created by the user. 
+The `main.m` script in turn runs `model_init.m` that is for initializing our model and stimulus parameters and `model_run.m` that is for simulating our model on each protocol. All simulation results are saved in `/Simulation Results` folder that is needed to be created by the user. 
 
 ## Visualize simulation results
 We provide the `Visualization.m` to reproduce most figures in the papers. The `Visualization.m` script loads the results saved `/Simulation Results` folder and generates the figures saved in `/Figures` folder created by the user. 
